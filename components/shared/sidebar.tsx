@@ -13,10 +13,12 @@ import {
   ShieldCheck,
   Users,
   Users2,
+  Building2,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Panel principal', icon: LayoutDashboard },
+  { href: '/dashboard/proyectos', label: 'Proyectos', icon: Building2 },
   { href: '/dashboard/incidentes', label: 'Incidentes', icon: AlertTriangle },
   { href: '/dashboard/epp', label: 'EPP', icon: HardHat },
   { href: '/dashboard/capacitaciones', label: 'Capacitaciones', icon: GraduationCap },
