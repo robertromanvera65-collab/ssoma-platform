@@ -79,3 +79,14 @@ export type Profile = {
   is_admin: boolean;
   created_at: string;
 };
+
+export type Personal = {
+  id: string;
+  nombre_completo: string;
+  documento: string;
+  cargo: string;
+  area: string;
+  estado: string;
+  created_by: string;
+  created_at: string;
+};
