@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { Personal } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 const estadoOptions = [
@@ -54,6 +54,8 @@ export default function PersonalPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -126,6 +128,91 @@ export default function PersonalPage() {
     }
   };
 
+  // --- Importación desde CSV ---
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+
+  const parseCsvLine = (line: string, delimiter: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === delimiter && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result.map((v) => v.replace(/^"|"$/g, ''));
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      if (lines.length < 2) {
+        toast.error('El archivo no tiene datos para importar');
+        return;
+      }
+
+      const delimiter = lines[0].includes(';') ? ';' : ',';
+      const headers = parseCsvLine(lines[0], delimiter).map(normalize);
+
+      const findCol = (candidates: string[]) =>
+        headers.findIndex((h) => candidates.some((c) => h.includes(c)));
+
+      const idxNombre = findCol(['personal', 'nombre', 'trabajador']);
+      const idxArea = findCol(['area']);
+      const idxDocumento = findCol(['numero', 'documento', 'dni']);
+      const idxCargo = findCol(['cargo', 'puesto']);
+
+      if (idxNombre === -1) {
+        toast.error('No se encontró una columna de nombre (Personal / Nombre)');
+        return;
+      }
+
+      const rows = lines.slice(1).map((line) => {
+        const cols = parseCsvLine(line, delimiter);
+        return {
+          nombre_completo: cols[idxNombre]?.trim() || '',
+          area: idxArea !== -1 ? cols[idxArea]?.trim() || '' : '',
+          documento: idxDocumento !== -1 ? cols[idxDocumento]?.trim() || '' : '',
+          cargo: idxCargo !== -1 ? cols[idxCargo]?.trim() || '' : '',
+          estado: 'activo',
+        };
+      }).filter((r) => r.nombre_completo && r.nombre_completo !== '#');
+
+      if (rows.length === 0) {
+        toast.error('No se encontraron filas válidas para importar');
+        return;
+      }
+
+      const { error } = await supabase.from('personal').insert(rows);
+      if (error) throw error;
+
+      toast.success(`${rows.length} trabajadores importados correctamente`);
+      loadData();
+    } catch (err) {
+      toast.error('Error al importar el archivo');
+      console.error(err);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -135,10 +222,28 @@ export default function PersonalPage() {
             Registro de trabajadores reutilizable en EPP, capacitaciones e incidentes
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Agregar trabajador
-        </Button>
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={importing}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            Importar desde CSV
+          </Button>
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Agregar trabajador
+          </Button>
+        </div>
       </div>
 
       <Card className="border-border/60">
