@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { Personal } from '@/lib/types';
+import { Personal, Proyecto } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,10 +45,12 @@ const emptyForm = {
   cargo: '',
   area: '',
   estado: 'activo',
+  proyecto_id: '',
 };
 
 export default function PersonalPage() {
   const [data, setData] = useState<Personal[]>([]);
+  const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -59,14 +61,15 @@ export default function PersonalPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const { data: rows, error } = await supabase
-      .from('personal')
-      .select('*')
-      .order('nombre_completo');
-    if (error) {
+    const [rowsRes, proyRes] = await Promise.all([
+      supabase.from('personal').select('*, proyectos(*)').order('nombre_completo'),
+      supabase.from('proyectos').select('*').order('nombre'),
+    ]);
+    if (rowsRes.error) {
       toast.error('Error al cargar el personal');
     }
-    setData((rows as Personal[]) || []);
+    setData((rowsRes.data as Personal[]) || []);
+    setProyectos((proyRes.data as Proyecto[]) || []);
     setLoading(false);
   }, []);
 
@@ -88,6 +91,7 @@ export default function PersonalPage() {
       cargo: item.cargo,
       area: item.area,
       estado: item.estado,
+      proyecto_id: item.proyecto_id || '',
     });
     setDialogOpen(true);
   };
@@ -98,13 +102,14 @@ export default function PersonalPage() {
       return;
     }
     setSaving(true);
+    const payload = { ...form, proyecto_id: form.proyecto_id || null };
     try {
       if (editingId) {
-        const { error } = await supabase.from('personal').update(form).eq('id', editingId);
+        const { error } = await supabase.from('personal').update(payload).eq('id', editingId);
         if (error) throw error;
         toast.success('Trabajador actualizado');
       } else {
-        const { error } = await supabase.from('personal').insert(form);
+        const { error } = await supabase.from('personal').insert(payload);
         if (error) throw error;
         toast.success('Trabajador agregado');
       }
@@ -265,6 +270,7 @@ export default function PersonalPage() {
                   <TableHead>Documento</TableHead>
                   <TableHead>Cargo</TableHead>
                   <TableHead>Área</TableHead>
+                  <TableHead>Proyecto</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
@@ -276,6 +282,7 @@ export default function PersonalPage() {
                     <TableCell className="text-sm">{item.documento || '-'}</TableCell>
                     <TableCell className="text-sm">{item.cargo || '-'}</TableCell>
                     <TableCell className="text-sm">{item.area || '-'}</TableCell>
+                    <TableCell className="text-sm">{item.proyectos?.nombre || '-'}</TableCell>
                     <TableCell>
                       <Badge variant={item.estado === 'activo' ? 'default' : 'secondary'}>
                         {item.estado === 'activo' ? 'Activo' : 'Inactivo'}
@@ -360,6 +367,21 @@ export default function PersonalPage() {
                   placeholder="Producción, Mantenimiento..."
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Proyecto asignado</Label>
+              <Select
+                value={form.proyecto_id || 'none'}
+                onValueChange={(v) => setForm({ ...form, proyecto_id: v === 'none' ? '' : v })}
+              >
+                <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin asignar</SelectItem>
+                  {proyectos.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
