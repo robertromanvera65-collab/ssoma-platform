@@ -87,6 +87,16 @@ export type Personal = {
   cargo: string;
   area: string;
   estado: string;
+  proyecto_id: string | null;
+  created_by: string;
+  created_at: string;
+  proyectos?: Proyecto | null;
+};
+
+export type Proyecto = {
+  id: string;
+  nombre: string;
+  estado: string;
   created_by: string;
   created_at: string;
 };
