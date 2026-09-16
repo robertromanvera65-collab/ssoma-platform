@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 
 const titleMap: Record<string, string> = {
   '/dashboard': 'Panel principal',
+  '/dashboard/proyectos': 'Proyectos',
   '/dashboard/incidentes': 'Gestión de incidentes',
   '/dashboard/epp': 'Equipos de protección personal',
   '/dashboard/capacitaciones': 'Capacitaciones',
