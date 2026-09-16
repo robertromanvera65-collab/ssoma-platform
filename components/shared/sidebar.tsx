@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Users,
+  Users2,
 } from 'lucide-react';
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/dashboard/epp', label: 'EPP', icon: HardHat },
   { href: '/dashboard/capacitaciones', label: 'Capacitaciones', icon: GraduationCap },
   { href: '/dashboard/inspecciones', label: 'Inspecciones', icon: ClipboardCheck },
+  { href: '/dashboard/personal', label: 'Personal', icon: Users2 },
 ];
 
 const adminNavItem = { href: '/dashboard/admin', label: 'Administración', icon: Users };
