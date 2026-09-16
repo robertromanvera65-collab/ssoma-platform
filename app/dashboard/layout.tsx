@@ -13,6 +13,7 @@ const titleMap: Record<string, string> = {
   '/dashboard/epp': 'Equipos de protección personal',
   '/dashboard/capacitaciones': 'Capacitaciones',
   '/dashboard/inspecciones': 'Inspecciones',
+  '/dashboard/personal': 'Personal',
   '/dashboard/admin': 'Administración',
 };
 
