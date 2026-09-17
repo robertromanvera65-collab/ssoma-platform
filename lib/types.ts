@@ -100,3 +100,14 @@ export type Proyecto = {
   created_by: string;
   created_at: string;
 };
+
+export type PersonalDocumento = {
+  id: string;
+  personal_id: string;
+  tipo_documento: string;
+  estado: string;
+  vigencia: string | null;
+  observaciones: string;
+  created_by: string;
+  created_at: string;
+};
