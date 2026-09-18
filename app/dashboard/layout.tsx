@@ -15,6 +15,7 @@ const titleMap: Record<string, string> = {
   '/dashboard/capacitaciones': 'Capacitaciones',
   '/dashboard/inspecciones': 'Inspecciones',
   '/dashboard/personal': 'Personal',
+  '/dashboard/equipos': 'Equipos',
   '/dashboard/admin': 'Administración',
 };
 
