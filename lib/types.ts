@@ -111,3 +111,26 @@ export type PersonalDocumento = {
   created_by: string;
   created_at: string;
 };
+
+export type Equipo = {
+  id: string;
+  tipo: string;
+  marca_modelo: string;
+  numero: string;
+  proyecto_id: string | null;
+  estado: string;
+  created_by: string;
+  created_at: string;
+  proyectos?: Proyecto | null;
+};
+
+export type EquipoDocumento = {
+  id: string;
+  equipo_id: string;
+  tipo_documento: string;
+  estado: string;
+  vigencia: string | null;
+  observaciones: string;
+  created_by: string;
+  created_at: string;
+};
